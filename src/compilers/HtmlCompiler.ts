@@ -1,6 +1,7 @@
 import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
+/** @var childless hash table to determine if element is singleton */
 const childless = {
 	area: true,
 	br: true,
@@ -19,6 +20,9 @@ const childless = {
 	wbr: true
 }
 
+/**
+ * Transpiles virtual element to HTML string.
+ */
 export class HtmlCompiler extends Compiler {
 	compile (element: VirtualElement) {
 		return element.children
@@ -26,6 +30,11 @@ export class HtmlCompiler extends Compiler {
 			.join('\n')
 	}
 
+	/**
+	 * Transpires element and its children.
+	 * @param element
+	 * @return html code
+	 */
 	private outElement (element: VirtualElement) {
 		let type = element.name || 'div'
 		let html = `<${type}`
@@ -39,7 +48,7 @@ export class HtmlCompiler extends Compiler {
 			html += ` ${att}="${this.resolve(element.attributes[att])}"`
 		}
 
-		if (childless[type]) {
+		if (childless[type.toLowerCase()]) {
 			html += ' />\n'
 
 			if (element.children.length) {

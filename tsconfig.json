@@ -13,7 +13,7 @@
     "sourceMap": true,
     "outDir": "dist/lib",
     "declarationDir": "dist/",
-    "removeComments": true,
+    "removeComments": false,
     "strict": false,
     "strictNullChecks": false
   }

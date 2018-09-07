@@ -1,11 +1,19 @@
 import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
+/**
+ * Compiles the virtual element to DOM elements.
+ */
 export class DomCompiler extends Compiler {
 	compile (element: VirtualElement) {
 		return this.outElement(element)
 	}
 
+	/**
+	 * Compiles single element
+	 * @param element
+	 * @returns compiled element
+	 */
 	private outElement (element: VirtualElement) {
 		let type = element.name || 'div'
 		let dom: HTMLElement = document.createElement(type)

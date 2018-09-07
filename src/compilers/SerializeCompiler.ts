@@ -1,11 +1,19 @@
 import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
+/**
+ * Transpiles virtual element to serializable object.
+ */
 export class SerializeCompiler extends Compiler {
 	compile (element: VirtualElement) {
 		return this.outElement(element)
 	}
 
+	/**
+	 * Transpiles element and its children.
+	 * @param element
+	 * @returns serializable object
+	 */
 	private outElement (element: VirtualElement) {
 		return {
 			name: element.name,

@@ -1,5 +1,8 @@
 import { VirtualElement } from './VirtualElement'
 
+/**
+ * Error thrown when there is parsing problem with source.
+ */
 export class ParseError extends Error {
 	constructor (
 		public source: Source,
@@ -12,10 +15,17 @@ export class ParseError extends Error {
 		Object.setPrototypeOf(this, ParseError.prototype)
 	}
 
+	/**
+	 * @return line on which error occured
+	 */
 	public getLine () {
 		return this.source.getLocation(this.position).line
 	}
 
+	/**
+	 * Returns part of template where error occured and its location.
+	 * @return formatted description of error
+	 */
 	public toPrettyString () {
 		let location = this.source.getLocation(this.position)
 		let code = this.source.getCode(this.position).replace(/\t/g, ' ')
@@ -44,6 +54,7 @@ export class ParseError extends Error {
 	}
 }
 
+/** @private */
 export class TokenParseError extends ParseError {
 	constructor (public source: Source, message: string, token: Token) {
 		super(source, message, token.getPosition(), token.getContents().length)
@@ -52,6 +63,7 @@ export class TokenParseError extends ParseError {
 	}
 }
 
+/** @private */
 enum State {
 	Newline = 'newline',
 	Name = 'name',
@@ -61,6 +73,7 @@ enum State {
 	Content = 'content'
 }
 
+/** @private */
 const Tokens = {
 	newLine: '\\n',
 	indent: '[ \\t]',
@@ -73,10 +86,18 @@ const Tokens = {
 	stringContents: '(\\\\"|[^"])*'
 }
 
+/**
+ * Represent single parsed template and actually does all the parsing.
+ * @private
+ */
 export class Source {
+	/** @var position our current position in the text */
 	private position: number = 0
+	/** @var state determines what tokens are accepted and what to do with them */
 	private state: State = State.Newline
+	/** @var currentElement element we're parsing for now */
 	private currentElement: VirtualElement = this.createElement(-1, null)
+	/** @var attributeName buffer variable used to save attribute name when parsing attribute */
 	private attributeName: string = ''
 
 	constructor (
