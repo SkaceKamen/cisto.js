@@ -6,7 +6,7 @@ import typescript from 'rollup-plugin-typescript2'
 const pkg = require('./package.json')
 
 export default {
-	input: 'src/index.ts',
+	input: 'src/cisto.ts',
 	output: [
 		{ file: pkg.main, name: 'cisto', format: 'umd', sourcemap: true },
 		{ file: pkg.module, format: 'es', sourcemap: true }

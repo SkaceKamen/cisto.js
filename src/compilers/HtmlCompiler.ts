@@ -1,5 +1,5 @@
 import { Compiler } from '../compiler'
-import { VirtualElement } from '../Source'
+import { VirtualElement } from '../VirtualElement'
 
 export class HtmlCompiler implements Compiler {
 	compile (element: VirtualElement) {

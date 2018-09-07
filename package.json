@@ -1,9 +1,10 @@
 {
   "name": "cisto",
   "version": "1.0.0",
-  "description": "",
+  "description": "Simple template system that compiles to anything you want",
   "main": "dist/cisto.js",
   "module": "dist/cisto.es5.js",
+  "typings": "dist/types/cisto.d.ts",
   "scripts": {
     "build": "tsc --module commonjs && rollup -c rollup.config.ts",
     "watch": "rollup -c rollup.config.ts -w",

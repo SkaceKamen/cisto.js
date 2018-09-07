@@ -1,3 +1,5 @@
+import { VirtualElement } from './VirtualElement'
+
 export class ParseError extends Error {
 	constructor (
 		public source: Source,
@@ -69,17 +71,6 @@ const Tokens = {
 	value: '[a-z0-9-_/\\\\#:@]+',
 	stringLimiter: '"',
 	stringContents: '(\\\\"|[^"])*'
-}
-
-export interface VirtualElement {
-	indent: number
-	parent: VirtualElement
-	name: string | null
-	children: VirtualElement[]
-	attributes: { [key: string]: string }
-	classes: string[]
-	id: string | null
-	content: string | null
 }
 
 export class Source {
@@ -249,16 +240,10 @@ export class Source {
 	}
 
 	private createElement (indent: number, parent: VirtualElement | null) {
-		return {
-			indent,
-			parent,
-			name: null,
-			children: [],
-			attributes: {},
-			classes: [],
-			id: null,
-			content: null
-		} as VirtualElement
+		let element = new VirtualElement()
+		element.indent = indent
+		element.parent = parent
+		return element
 	}
 
 	private consumeAny () {

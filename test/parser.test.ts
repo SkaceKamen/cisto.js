@@ -1,10 +1,10 @@
-import { Parser } from '../dist/cisto'
+import { Parser, VirtualElement } from '../dist/cisto'
 
 describe('Parser test', () => {
 	it('Parses single element', () => {
 		let result = new Parser().parse('#container')
 
-		expect(result).toBeInstanceOf(Object)
+		expect(result).toBeInstanceOf(VirtualElement)
 		expect(result.children.length).toBe(1)
 		expect(result.children[0].id).toBe('container')
 		expect(result.children[0].name).toBe(null)
@@ -14,7 +14,7 @@ describe('Parser test', () => {
 	it('Parses attributes', () => {
 		let result = new Parser().parse('img.logo#logo src="logo.png" alt=logo')
 
-		expect(result).toBeInstanceOf(Object)
+		expect(result).toBeInstanceOf(VirtualElement)
 		expect(result.children.length).toBe(1)
 		expect(result.children[0].id).toBe('logo')
 		expect(result.children[0].name).toBe('img')
@@ -32,7 +32,7 @@ describe('Parser test', () => {
 			.item
 		`)
 
-		expect(result).toBeInstanceOf(Object)
+		expect(result).toBeInstanceOf(VirtualElement)
 		expect(result.children.length).toBe(1)
 		expect(result.children[0].children.length).toBe(3)
 	})
@@ -48,7 +48,7 @@ describe('Parser test', () => {
 			.item
 		`)
 
-		expect(result).toBeInstanceOf(Object)
+		expect(result).toBeInstanceOf(VirtualElement)
 		expect(result.children.length).toBe(2)
 		expect(result.children[0].children.length).toBe(3)
 		expect(result.children[1].children.length).toBe(2)
