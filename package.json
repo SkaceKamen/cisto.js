@@ -11,8 +11,12 @@
     "test": "jest",
     "lint": "tslint --project ."
   },
-  "author": "Jan Zípek",
-  "license": "ISC",
+  "author": "Jan Zípek <jan@zipek.cz>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:SkaceKamen/cisto.js.git"
+  },
   "devDependencies": {
     "@types/jest": "^23.3.1",
     "@types/node": "^10.9.4",
