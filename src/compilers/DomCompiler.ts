@@ -1,20 +1,9 @@
 import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
-export class DomCompiler implements Compiler {
-	constructor (
-		private data: { [key: string]: any }
-	) {}
-
+export class DomCompiler extends Compiler {
 	compile (element: VirtualElement) {
 		return this.outElement(element)
-	}
-
-	protected resolve (name: string) {
-		if (name.substr(0, 1) === '"') {
-			return JSON.parse(name)
-		}
-		return this.data[name]
 	}
 
 	private outElement (element: VirtualElement) {

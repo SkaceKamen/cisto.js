@@ -1,7 +1,7 @@
 import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
-export class SerializeCompiler implements Compiler {
+export class SerializeCompiler extends Compiler {
 	compile (element: VirtualElement) {
 		return this.outElement(element)
 	}

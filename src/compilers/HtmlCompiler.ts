@@ -2,25 +2,28 @@ import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
 const childless = {
-	img: true
+	area: true,
+	br: true,
+	base: true,
+	col: true,
+	command: true,
+	embed: true,
+	hr: true,
+	img: true,
+	input: true,
+	keygen: true,
+	link: true,
+	meta: true,
+	param: true,
+	track: true,
+	wbr: true
 }
 
-export class HtmlCompiler implements Compiler {
-	constructor (
-		private data: { [key: string]: any }
-	) {}
-
+export class HtmlCompiler extends Compiler {
 	compile (element: VirtualElement) {
 		return element.children
 			.map(e => this.outElement(e))
 			.join('\n')
-	}
-
-	protected resolve (name: string) {
-		if (name.substr(0, 1) === '"') {
-			return JSON.parse(name)
-		}
-		return this.data[name]
 	}
 
 	private outElement (element: VirtualElement) {
