@@ -12,7 +12,7 @@
     "declaration": true,
     "sourceMap": true,
     "outDir": "dist/lib",
-    "declarationDir": "dist/types",
+    "declarationDir": "dist/",
     "removeComments": true,
     "strict": false,
     "strictNullChecks": false
