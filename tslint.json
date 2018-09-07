@@ -1,0 +1,17 @@
+{
+	"extends": "tslint-config-standard",
+	"rules": {
+		"indent": [true, "tabs"],
+		"ter-indent": [
+			true,
+			"tab",
+			{ "SwitchCase": 1 }
+		],
+		"no-empty": false,
+		"triple-equals": false,
+		"no-eval": false,
+		"no-floating-promises": false,
+		"no-unnecessary-qualifier": false,
+		"no-conditional-assignment": false
+	}
+}
