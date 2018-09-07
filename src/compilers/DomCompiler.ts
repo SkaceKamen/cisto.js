@@ -2,6 +2,10 @@ import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
 export class DomCompiler implements Compiler {
+	constructor (
+		private data: { [key: string]: any }
+	) {}
+
 	compile (element: VirtualElement) {
 		return this.outElement(element)
 	}
@@ -10,6 +14,7 @@ export class DomCompiler implements Compiler {
 		if (name.substr(0, 1) === '"') {
 			return JSON.parse(name)
 		}
+		return this.data[name]
 	}
 
 	private outElement (element: VirtualElement) {
@@ -20,16 +25,14 @@ export class DomCompiler implements Compiler {
 			dom.setAttribute('id', this.resolve(element.id))
 		}
 
-		element.classes.forEach(name => {
-			dom.className += ' ' + this.resolve(name)
-		})
+		dom.className = element.classes.join(' ')
 
 		for (let att in element.attributes) {
 			dom.setAttribute(att, this.resolve(element.attributes[att]))
 		}
 
 		if (element.content) {
-			dom.innerHTML = element.content
+			dom.innerHTML = element.content.replace(/{([^}]*)}/g, (match, p1) => { return this.data[p1] })
 		}
 
 		element.children.forEach(child => {

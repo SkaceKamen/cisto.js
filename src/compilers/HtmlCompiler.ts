@@ -1,9 +1,26 @@
 import { Compiler } from '../compiler'
 import { VirtualElement } from '../VirtualElement'
 
+const childless = {
+	img: true
+}
+
 export class HtmlCompiler implements Compiler {
+	constructor (
+		private data: { [key: string]: any }
+	) {}
+
 	compile (element: VirtualElement) {
-		return this.outElement(element)
+		return element.children
+			.map(e => this.outElement(e))
+			.join('\n')
+	}
+
+	protected resolve (name: string) {
+		if (name.substr(0, 1) === '"') {
+			return JSON.parse(name)
+		}
+		return this.data[name]
 	}
 
 	private outElement (element: VirtualElement) {
@@ -13,25 +30,34 @@ export class HtmlCompiler implements Compiler {
 			html += ` id="${element.id}"`
 		}
 		if (element.classes.length) {
-			html += ` class="${element.classes.join(' ').replace(/"/g, '')}"`
+			html += ` class="${element.classes.join(' ')}"`
 		}
 		for (let att in element.attributes) {
-			html += ` ${att}="${element.attributes[att].replace(/"/g, '')}"`
-		}
-		html += '>'
-
-		if (element.content) {
-			html += '\n'
-			html += '  ' + element.content
-			html += '\n'
+			html += ` ${att}="${this.resolve(element.attributes[att])}"`
 		}
 
-		element.children.forEach(child => {
-			html += '\n'
-			html += '  ' + this.outElement(child).replace(/\n(.)/g, '\n  $1')
-		})
+		if (childless[type]) {
+			html += ' />\n'
 
-		html += `</${type}>\n`
+			if (element.children.length) {
+				throw new Error(`Element type ${type} can't have children.`)
+			}
+		} else {
+			html += '>'
+
+			if (element.content) {
+				html += '\n'
+				html += '  ' + element.content.replace(/{([^}]*)}/g, (match, p1) => { return this.data[p1] })
+				html += '\n'
+			}
+
+			element.children.forEach(child => {
+				html += '\n'
+				html += '  ' + this.outElement(child).replace(/\n(.)/g, '\n  $1')
+			})
+
+			html += `</${type}>\n`
+		}
 
 		return html
 	}
