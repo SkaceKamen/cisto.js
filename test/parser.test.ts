@@ -53,4 +53,34 @@ describe('Parser test', () => {
 		expect(result.children[0].children.length).toBe(3)
 		expect(result.children[1].children.length).toBe(2)
 	})
+
+	it('Parses content without quotes', () => {
+		let result = new Parser().parse(`
+		.items Contentí content1 content2
+		`)
+
+		expect(result).toBeInstanceOf(VirtualElement)
+		expect(result.children.length).toBe(1)
+		expect(result.children[0].content).toBe('Contentí content1 content2')
+	})
+
+	it('Parses content with quotes', () => {
+		let result = new Parser().parse(`
+		.items "Contentí content1 content2"
+		`)
+
+		expect(result).toBeInstanceOf(VirtualElement)
+		expect(result.children.length).toBe(1)
+		expect(result.children[0].content).toBe('Contentí content1 content2')
+	})
+
+	it('Parses multiline content with quotes', () => {
+		let result = new Parser().parse(`
+		.items "Contentí content1\ncontent2 content4\ncontent5"
+		`)
+
+		expect(result).toBeInstanceOf(VirtualElement)
+		expect(result.children.length).toBe(1)
+		expect(result.children[0].content).toBe('Contentí content1\ncontent2 content4\ncontent5')
+	})
 })
