@@ -134,6 +134,7 @@ export class Source {
 
 	public compile () {
 		let indent: number = 0
+		let indentType: string
 
 		let top = this.currentElement = this.createElement(-1, null)
 		this.attributeName = ''
@@ -148,6 +149,15 @@ export class Source {
 			switch (this.state) {
 				case State.Newline:
 					if (token.type === TokenType.Indent) {
+						if (indentType && indentType !== token.contents) {
+							throw new TokenParseError(
+								this,
+								'Inconsistent use of tabs and spaces for indentation',
+								token
+							)
+						}
+
+						indentType = token.contents
 						indent++
 					} else if (token.type !== TokenType.NewLine) {
 						let parent = null
