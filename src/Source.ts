@@ -13,6 +13,8 @@ export class ParseError extends Error {
 		super(message)
 
 		Object.setPrototypeOf(this, ParseError.prototype)
+
+		this.message = this.toPrettyString()
 	}
 
 	/**
@@ -57,7 +59,7 @@ export class ParseError extends Error {
 /** @private */
 export class TokenParseError extends ParseError {
 	constructor (public source: Source, message: string, token: Token) {
-		super(source, message, token.getPosition(), token.getContents().length)
+		super(source, message, token.position, token.contents.length)
 
 		Object.setPrototypeOf(this, TokenParseError.prototype)
 	}
@@ -65,25 +67,51 @@ export class TokenParseError extends ParseError {
 
 /** @private */
 enum State {
-	Newline = 'newline',
-	Name = 'name',
-	Props = 'props',
-	PropName = 'propname',
-	PropValue = 'propvalue',
-	Content = 'content'
+	Newline,
+	Name,
+	Props,
+	PropName,
+	PropValue,
+	Content
 }
 
 /** @private */
+enum TokenType {
+	NewLine,
+	Indent,
+	AttributeName,
+	Name,
+	InstantClass,
+	InstantId,
+	Value,
+	StringLimiter,
+	StringContents
+}
+
+/** @private */
+const TokenTypes = [
+	TokenType.NewLine,
+	TokenType.Indent,
+	TokenType.AttributeName,
+	TokenType.Name,
+	TokenType.InstantClass,
+	TokenType.InstantId,
+	TokenType.Value,
+	TokenType.StringLimiter,
+	TokenType.StringContents
+]
+
+/** @private */
 const Tokens = {
-	newLine: '\\n',
-	indent: '[ \\t]',
-	attributeName: '[a-z0-9-:@]*\\s*=\\s*',
-	name: '[a-z]+',
-	instantClass: '\\.[a-z][a-z0-9_-]*',
-	instantId: '#[a-z][a-z0-9_-]*',
-	value: '[a-z0-9-_/\\\\#:@]+',
-	stringLimiter: '"',
-	stringContents: '(\\\\"|[^"])*'
+	[TokenType.NewLine]: /^(\n)/i,
+	[TokenType.Indent]: /^([ \t])/i,
+	[TokenType.AttributeName]: /^([a-z0-9-:@]*\s*=\s*)/i,
+	[TokenType.Name]: /^([a-z]+)/i,
+	[TokenType.InstantClass]: /^(\.[a-z][a-z0-9_-]*)/i,
+	[TokenType.InstantId]: /^(#[a-z][a-z0-9_-]*)/i,
+	[TokenType.Value]: /^([a-z0-9-_/\\#:@]+)/i,
+	[TokenType.StringLimiter]: /^(")/i,
+	[TokenType.StringContents]: /^((\\"|[^"])*)/i
 }
 
 /**
@@ -101,8 +129,7 @@ export class Source {
 	private attributeName: string = ''
 
 	constructor (
-		private text: string,
-		private debug = false
+		private text: string
 	) {}
 
 	public compile () {
@@ -120,9 +147,9 @@ export class Source {
 
 			switch (this.state) {
 				case State.Newline:
-					if (token.is('indent')) {
+					if (token.type === TokenType.Indent) {
 						indent++
-					} else if (!token.is('newLine')) {
+					} else if (token.type !== TokenType.NewLine) {
 						let parent = null
 
 						if (indent > this.currentElement.indent) {
@@ -160,17 +187,17 @@ export class Source {
 					break
 
 				case State.PropValue:
-					switch (token.getType()) {
-						case 'indent': break
-						case 'stringLimiter':
+					switch (token.type) {
+						case TokenType.Indent: break
+						case TokenType.StringLimiter:
 							this.currentElement.attributes[this.attributeName] = '"' + this.consumeString() + '"'
 							this.state = State.Props
 							break
-						case 'name':
-						case 'value':
-						case 'instantClass':
-						case 'instantId':
-							this.currentElement.attributes[this.attributeName] = token.getContents()
+						case TokenType.Name:
+						case TokenType.Value:
+						case TokenType.InstantClass:
+						case TokenType.InstantId:
+							this.currentElement.attributes[this.attributeName] = token.contents
 							this.state = State.Props
 							break
 					}
@@ -181,8 +208,9 @@ export class Source {
 	}
 
 	public getCode (offset: number) {
-		let from = this.text.substr(0, offset).lastIndexOf('\n') + 1 || 0
-		let to = this.text.indexOf('\n', offset) || this.text.length
+		let from = (this.text.substr(0, offset).lastIndexOf('\n') + 1) || 0
+		let to = this.text.indexOf('\n', offset)
+		if (to < 0) to = this.text.length
 
 		return this.text.substr(from, to - from)
 	}
@@ -197,36 +225,36 @@ export class Source {
 	}
 
 	private processProps (token: Token) {
-		switch (token.getType()) {
-			case 'indent': break
-			case 'name':
+		switch (token.type) {
+			case TokenType.Indent: break
+			case TokenType.Name:
 				if (this.state !== State.Name) {
 					this.state = State.Content
 
-					this.currentElement.content = token.getContents()
+					this.currentElement.content = token.contents
 					while (true) {
 						let subToken = this.consumeAny()
 						if (subToken === null) break
-						if (subToken.is('newLine')) break
-						this.currentElement.content += subToken.getContents()
+						if (subToken.type === TokenType.NewLine) break
+						this.currentElement.content += subToken.contents
 					}
 
 					this.state = State.Newline
 				} else {
-					this.currentElement.name = token.getContents()
+					this.currentElement.name = token.contents
 					this.state = State.Props
 				}
 				break
-			case 'instantClass':
-				this.currentElement.classes.push(token.getContents().substr(1))
+			case TokenType.InstantClass:
+				this.currentElement.classes.push(token.contents.substr(1))
 				this.state = State.Props
 				break
-			case 'instantId':
-				this.currentElement.id = token.getContents().substr(1)
+			case TokenType.InstantId:
+				this.currentElement.id = token.contents.substr(1)
 				this.state = State.Props
 				break
-			case 'attributeName':
-				let name = token.getContents().match(/^([a-z0-9-:@]+)/i)
+			case TokenType.AttributeName:
+				let name = token.contents.match(/^([a-z0-9-:@]+)/i)
 				if (!name) {
 					throw new TokenParseError(this, 'Attribute name was not matched', token)
 				}
@@ -234,30 +262,30 @@ export class Source {
 				this.attributeName = name[1]
 				this.state = State.PropValue
 				break
-			case 'stringLimiter':
+			case TokenType.StringLimiter:
 				this.currentElement.content = this.consumeString()
 				this.state = State.Newline
 				break
-			case 'newLine':
+			case TokenType.NewLine:
 				this.state = State.Newline
 				break
 			default:
-				throw new TokenParseError(this, `Unexpected ${ token.getType() }`, token)
+				throw new TokenParseError(this, `Unexpected ${ TokenType[token.type] }`, token)
 		}
 	}
 
 	private consumeString () {
-		let contents = this.consumeSpecific('stringContents')
+		let contents = this.consumeSpecific(TokenType.StringContents)
 		if (!contents) {
 			throw new ParseError(this, 'Expected string contents', this.position)
 		}
 
-		let end = this.consumeSpecific('stringLimiter')
+		let end = this.consumeSpecific(TokenType.StringLimiter)
 		if (!end) {
 			throw new ParseError(this, 'Expected end of string', this.position)
 		}
 
-		return contents.getContents()
+		return contents.contents
 	}
 
 	private createElement (indent: number, parent: VirtualElement | null) {
@@ -268,8 +296,9 @@ export class Source {
 	}
 
 	private consumeAny () {
-		for (let name in Tokens) {
-			let token = this.consumeSpecific(name)
+		for (let i = 0; i < TokenTypes.length; i++) {
+			let type = TokenTypes[i]
+			let token = this.consumeSpecific(type)
 			if (token) {
 				return token
 			}
@@ -277,55 +306,34 @@ export class Source {
 		return null
 	}
 
-	private consumeSpecific (name: string) {
-		let token = this.consume(Tokens[name], name)
+	private consumeSpecific (name: TokenType) {
+		let token = this.consume(name)
 		if (token) {
-			this.d(
-				`[${ this.state }] Consumed ${ name } - '${token.getContents().replace(/\n/g, '\\n')}'`
-			)
+			/*console.log(
+				`[${ State[this.state] }] Consumed ${ TokenType[name] } - '${token.contents.replace(/\n/g, '\\n')}'`
+			)*/
 
-			this.position += token.getContents().length
+			this.position += token.contents.length
 			return token
 		}
 
 		return null
 	}
 
-	private consume (pattern: string, token: string) {
-		let match = this.text
-			.substr(this.position)
-			.match(new RegExp(`^(${ pattern })`, 'i'))
+	private consume (token: TokenType) {
+		let regex = Tokens[token]
+		let match = regex.exec(this.text.substr(this.position))
 
 		if (!match) return null
 
 		return new Token(match[1], this.position, token)
 	}
-
-	private d (text: string) {
-		if (this.debug) console.log(text)
-	}
 }
 
 export class Token {
 	constructor (
-		private contents: string,
-		private position: number,
-		private type: string
+		public contents: string,
+		public position: number,
+		public type: TokenType
 	) {}
-
-	is (type: string) {
-		return this.type === type
-	}
-
-	getType () {
-		return this.type
-	}
-
-	getContents () {
-		return this.contents
-	}
-
-	getPosition () {
-		return this.position
-	}
 }
