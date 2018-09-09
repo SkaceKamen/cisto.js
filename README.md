@@ -22,7 +22,7 @@ let html: string = new HtmlCompiler().compile(virtualElement)
 let dom: HTMLElement = new DomCompiler().compile(virtualElement)
 
 // Or you can directly call compiler, without having to worry about parser
-let object = new SerializeCompiler().load('div.title')
+let object = new SerializeCompiler().process('div.title')
 ```
 
 ## Example
