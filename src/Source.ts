@@ -13,8 +13,6 @@ export class ParseError extends Error {
 		super(message)
 
 		Object.setPrototypeOf(this, ParseError.prototype)
-
-		this.message = this.toPrettyString()
 	}
 
 	/**
