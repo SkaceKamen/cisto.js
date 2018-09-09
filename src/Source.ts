@@ -82,6 +82,7 @@ enum TokenType {
 	InstantClass,
 	InstantId,
 	Value,
+	Content,
 	StringLimiter,
 	StringContents
 }
@@ -96,7 +97,7 @@ const TokenTypes = [
 	TokenType.InstantId,
 	TokenType.Value,
 	TokenType.StringLimiter,
-	TokenType.StringContents
+	TokenType.Content
 ]
 
 /** @private */
@@ -109,7 +110,8 @@ const Tokens = {
 	[TokenType.InstantId]: /^(#[a-z][a-z0-9_-]*)/i,
 	[TokenType.Value]: /^([a-z0-9-_/\\#:@]+)/i,
 	[TokenType.StringLimiter]: /^(")/i,
-	[TokenType.StringContents]: /^((\\"|[^"])*)/i
+	[TokenType.StringContents]: /^((?:\\"|[^"])*)/i,
+	[TokenType.Content]: /^((?:\\\n|[^\n])+)/i
 }
 
 /**
@@ -199,6 +201,17 @@ export class Source {
 							this.state = State.Props
 							break
 					}
+					break
+
+				case State.Content:
+					switch (token.type) {
+						case TokenType.NewLine:
+							this.state = State.Newline
+							break
+						default:
+							this.currentElement.content += token.contents
+					}
+					break
 			}
 		}
 
@@ -230,14 +243,6 @@ export class Source {
 					this.state = State.Content
 
 					this.currentElement.content = token.contents
-					while (true) {
-						let subToken = this.consumeAny()
-						if (subToken === null) break
-						if (subToken.type === TokenType.NewLine) break
-						this.currentElement.content += subToken.contents
-					}
-
-					this.state = State.Newline
 				} else {
 					this.currentElement.name = token.contents
 					this.state = State.Props
@@ -297,7 +302,7 @@ export class Source {
 		for (let i = 0; i < TokenTypes.length; i++) {
 			let type = TokenTypes[i]
 			let token = this.consumeSpecific(type)
-			if (token) {
+			if (token && (token.type !== TokenType.StringContents || token.contents.length > 0)) {
 				return token
 			}
 		}
@@ -307,9 +312,11 @@ export class Source {
 	private consumeSpecific (name: TokenType) {
 		let token = this.consume(name)
 		if (token) {
-			/*console.log(
+			/*
+			console.log(
 				`[${ State[this.state] }] Consumed ${ TokenType[name] } - '${token.contents.replace(/\n/g, '\\n')}'`
-			)*/
+			)
+			*/
 
 			this.position += token.contents.length
 			return token
