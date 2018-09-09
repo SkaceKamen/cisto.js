@@ -58,13 +58,14 @@ export class HtmlCompiler extends Compiler {
 			html += '>'
 
 			if (element.content) {
-				html += '\n'
-				html += '  ' + element.content.replace(/{([^}]*)}/g, (match, p1) => { return this.data[p1] })
+				html += element.content.replace(/{([^}]*)}/g, (match, p1) => { return this.data[p1] })
+			}
+
+			if (element.children.length > 0) {
 				html += '\n'
 			}
 
 			element.children.forEach(child => {
-				html += '\n'
 				html += '  ' + this.outElement(child).replace(/\n(.)/g, '\n  $1')
 			})
 
