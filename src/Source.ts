@@ -30,12 +30,13 @@ export class ParseError extends Error {
 		let location = this.source.getLocation(this.position)
 		let code = this.source.getCode(this.position).replace(/\t/g, ' ')
 		let indent = ''
-		let carret = '  '
+		let carret = ''
 		let codeLine = `${location.line} | `
 
 		for (let i = 0; i < codeLine.length + location.offset - 1; i++) {
 			indent += ' '
 		}
+
 		for (let c = 0; c < this.length; c++) {
 			carret += '^'
 		}
