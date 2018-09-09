@@ -26,6 +26,6 @@ export abstract class Compiler {
 		if (name.substr(0, 1) === '"') {
 			return JSON.parse(name)
 		}
-		return this.data[name]
+		return this.data[name] === undefined ? name : this.data[name]
 	}
 }
