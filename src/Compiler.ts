@@ -13,7 +13,7 @@ export abstract class Compiler {
 	 * Parses and compiles template string.
 	 * @param template template string
 	 */
-	load (template: string) {
+	process (template: string) {
 		return this.compile(new Parser().parse(template))
 	}
 
