@@ -8,6 +8,13 @@ Small template library with simple integration.
 npm i cisto
 ```
 
+## Changelog
+
+### [1.0.4] - 2018-09-10
+ - Added support for comments
+
+Only last changes listed, more at [CHANELOG.md](changelog).
+
 ## Usage
 
 ```typescript
