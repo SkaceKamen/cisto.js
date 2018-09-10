@@ -71,13 +71,17 @@ enum State {
 	Props,
 	PropName,
 	PropValue,
-	Content
+	Content,
+	MultilineComment
 }
 
 /** @private */
 enum TokenType {
 	NewLine,
 	Indent,
+	Comment,
+	MultilineCommentStart,
+	MultilineCommentEnd,
 	AttributeName,
 	Name,
 	InstantClass,
@@ -92,6 +96,9 @@ enum TokenType {
 const TokenTypes = [
 	TokenType.NewLine,
 	TokenType.Indent,
+	TokenType.Comment,
+	TokenType.MultilineCommentStart,
+	TokenType.MultilineCommentEnd,
 	TokenType.AttributeName,
 	TokenType.Name,
 	TokenType.InstantClass,
@@ -105,11 +112,14 @@ const TokenTypes = [
 const Tokens = {
 	[TokenType.NewLine]: /^(\n)/i,
 	[TokenType.Indent]: /^([ \t])/i,
+	[TokenType.Comment]: /^(\/\/[^\n]*)/i,
+	[TokenType.MultilineCommentStart]: /^(\/\*)/i,
+	[TokenType.MultilineCommentEnd]: /^(\*\/)/i,
 	[TokenType.AttributeName]: /^([a-z0-9-:@]*\s*=\s*)/i,
 	[TokenType.Name]: /^([a-z]+)/i,
 	[TokenType.InstantClass]: /^(\.[a-z][a-z0-9_-]*)/i,
 	[TokenType.InstantId]: /^(#[a-z][a-z0-9_-]*)/i,
-	[TokenType.Value]: /^([a-z0-9-_/\\#:@]+)/i,
+	[TokenType.Value]: /^([a-z0-9-_\\#:@]+)/i,
 	[TokenType.StringLimiter]: /^(")/i,
 	[TokenType.StringContents]: /^((?:\\"|[^"])*)/i,
 	[TokenType.Content]: /^((?:\\\n|[^\n])+)/i
@@ -129,15 +139,20 @@ export class Source {
 	/** @var attributeName buffer variable used to save attribute name when parsing attribute */
 	private attributeName: string = ''
 
+	private previousState: State
+
+	private indent: number = 0
+
 	constructor (
 		private text: string
 	) {}
 
 	public compile () {
-		let indent: number = 0
 		let indentType: string
 
 		let top = this.currentElement = this.createElement(-1, null)
+
+		this.indent = 0
 		this.attributeName = ''
 
 		while (this.position < this.text.length) {
@@ -149,7 +164,12 @@ export class Source {
 
 			switch (this.state) {
 				case State.Newline:
-					if (token.type === TokenType.Indent) {
+					if (token.type === TokenType.Comment) {
+						// Nothing, skip
+					} else if (token.type === TokenType.MultilineCommentStart) {
+						this.previousState = this.state
+						this.state = State.MultilineComment
+					} else if (token.type === TokenType.Indent) {
 						if (indentType && indentType !== token.contents) {
 							throw new TokenParseError(
 								this,
@@ -159,22 +179,22 @@ export class Source {
 						}
 
 						indentType = token.contents
-						indent++
+						this.indent++
 					} else if (token.type !== TokenType.NewLine) {
 						let parent = null
 
-						if (indent > this.currentElement.indent) {
+						if (this.indent > this.currentElement.indent) {
 							parent = this.currentElement
 						}
 
-						if (indent <= this.currentElement.indent) {
+						if (this.indent <= this.currentElement.indent) {
 							let match = this.currentElement
-							while (match.indent >= indent) {
+							while (match.indent >= this.indent) {
 								match = match.parent
 								if (!match) {
 									throw new TokenParseError(
 										this,
-										`Element has unknown indentation ${ indent }`,
+										`Element has unknown indentation ${ this.indent }`,
 										token
 									)
 								}
@@ -182,13 +202,14 @@ export class Source {
 							parent = match
 						}
 
-						let element = this.createElement(indent, parent)
+						let element = this.createElement(this.indent, parent)
 						parent.children.push(element)
 						this.currentElement = element
 
-						indent = 0
 						this.state = State.Name
 						this.processProps(token)
+					} else {
+						this.indent = 0
 					}
 					break
 
@@ -200,6 +221,11 @@ export class Source {
 				case State.PropValue:
 					switch (token.type) {
 						case TokenType.Indent: break
+						case TokenType.Comment: break
+						case TokenType.MultilineCommentStart:
+							this.previousState = this.state
+							this.state = State.MultilineComment
+							break
 						case TokenType.StringLimiter:
 							this.currentElement.attributes[this.attributeName] = '"' + this.consumeString() + '"'
 							this.state = State.Props
@@ -217,12 +243,25 @@ export class Source {
 				case State.Content:
 					switch (token.type) {
 						case TokenType.NewLine:
+							this.indent = 0
 							this.state = State.Newline
+							break
+						case TokenType.Comment: break
+						case TokenType.MultilineCommentStart:
+							this.previousState = this.state
+							this.state = State.MultilineComment
 							break
 						default:
 							this.currentElement.content += token.contents
 					}
 					break
+
+				case State.MultilineComment:
+					switch (token.type) {
+						case TokenType.MultilineCommentEnd:
+							this.state = this.previousState
+							break
+					}
 			}
 		}
 
@@ -249,6 +288,11 @@ export class Source {
 	private processProps (token: Token) {
 		switch (token.type) {
 			case TokenType.Indent: break
+			case TokenType.Comment: break
+			case TokenType.MultilineCommentStart:
+				this.previousState = this.state
+				this.state = State.MultilineComment
+				break
 			case TokenType.Name:
 				if (this.state !== State.Name) {
 					this.state = State.Content
@@ -281,6 +325,7 @@ export class Source {
 				this.state = State.Newline
 				break
 			case TokenType.NewLine:
+				this.indent = 0
 				this.state = State.Newline
 				break
 			default:
