@@ -5,3 +5,4 @@ src/
 scripts/
 rollup.config.ts
 tslint.json
+tsconfig.json
