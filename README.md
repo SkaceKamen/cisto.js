@@ -54,20 +54,12 @@ can transpile to HTML:
     <a href="index">
       <img class="logo" src="logo.png" alt="Logo" />
     </a>
-
     <div id="navigation">
-      <a href="index">
-        Home
-      </a>
-
-      <a href="about_us">
-        About us
-      </a>
+      <a href="index">Home</a>
+      <a href="about_us">About us</a>
     </div>
   </div>
-
   <div id="content"></div>
-
   <div id="footer"></div>
 </div>
 ```
