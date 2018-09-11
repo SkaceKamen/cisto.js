@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.5] - 2018-09-11
+ - Added support for code in attribute values (`{ code }`)
+ - Element names can now contain numbers, underscores and dashes
+ - Content in quotes can now be inserted anywhere in the element definition
+
 ## [1.0.4] - 2018-09-10
  - Added support for comments
 
