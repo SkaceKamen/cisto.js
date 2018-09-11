@@ -341,7 +341,6 @@ export class Source {
 				break
 			case TokenType.StringLimiter:
 				this.currentElement.content = this.consumeString()
-				this.state = State.Newline
 				break
 			case TokenType.CodeStart:
 				this.currentElement.attributes['{' + this.consumeCode() + '}'] = 'true'
