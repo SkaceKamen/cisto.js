@@ -1,6 +1,6 @@
 {
   "name": "cisto",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Simple template system that compiles to anything you want",
   "main": "dist/cisto.js",
   "typings": "dist/cisto.d.ts",

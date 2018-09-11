@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.6] - 2018-09-11
+ - Quickfix to incorrect parsing of everything
+
 ## [1.0.5] - 2018-09-11
  - Added support for code in attribute values (`{ code }`)
  - Element names can now contain numbers, underscores and dashes
