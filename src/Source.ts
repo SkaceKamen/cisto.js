@@ -124,7 +124,7 @@ const Tokens = {
 	[TokenType.MultilineCommentEnd]: /^(\*\/)/i,
 	[TokenType.AttributeName]: /^([a-z0-9-_:@]*\s*=\s*)/i,
 	[TokenType.InstantAttribute]: /^(:[a-z0-9-_:@]*)/i,
-	[TokenType.Name]: /^([a-z]+)/i,
+	[TokenType.Name]: /^([a-z][a-z-0-9_])/i,
 	[TokenType.InstantClass]: /^(\.[a-z][a-z0-9_-]*)/i,
 	[TokenType.InstantId]: /^(#[a-z][a-z0-9_-]*)/i,
 	[TokenType.Value]: /^([a-z0-9-_\\#:@]+)/i,
