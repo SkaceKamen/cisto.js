@@ -83,11 +83,15 @@ enum TokenType {
 	MultilineCommentStart,
 	MultilineCommentEnd,
 	AttributeName,
+	InstantAttribute,
 	Name,
 	InstantClass,
 	InstantId,
 	Value,
 	Content,
+	CodeStart,
+	CodeEnd,
+	CodeContents,
 	StringLimiter,
 	StringContents
 }
@@ -100,10 +104,13 @@ const TokenTypes = [
 	TokenType.MultilineCommentStart,
 	TokenType.MultilineCommentEnd,
 	TokenType.AttributeName,
+	TokenType.InstantAttribute,
 	TokenType.Name,
 	TokenType.InstantClass,
 	TokenType.InstantId,
 	TokenType.Value,
+	TokenType.CodeStart,
+	TokenType.CodeEnd,
 	TokenType.StringLimiter,
 	TokenType.Content
 ]
@@ -115,11 +122,15 @@ const Tokens = {
 	[TokenType.Comment]: /^(\/\/[^\n]*)/i,
 	[TokenType.MultilineCommentStart]: /^(\/\*)/i,
 	[TokenType.MultilineCommentEnd]: /^(\*\/)/i,
-	[TokenType.AttributeName]: /^([a-z0-9-:@]*\s*=\s*)/i,
+	[TokenType.AttributeName]: /^([a-z0-9-_:@]*\s*=\s*)/i,
+	[TokenType.InstantAttribute]: /^(:[a-z0-9-_:@]*)/i,
 	[TokenType.Name]: /^([a-z]+)/i,
 	[TokenType.InstantClass]: /^(\.[a-z][a-z0-9_-]*)/i,
 	[TokenType.InstantId]: /^(#[a-z][a-z0-9_-]*)/i,
 	[TokenType.Value]: /^([a-z0-9-_\\#:@]+)/i,
+	[TokenType.CodeStart]: /^({)/i,
+	[TokenType.CodeEnd]: /^(})/i,
+	[TokenType.CodeContents]: /^((?:\\}|[^}])*)/i,
 	[TokenType.StringLimiter]: /^(")/i,
 	[TokenType.StringContents]: /^((?:\\"|[^"])*)/i,
 	[TokenType.Content]: /^((?:\\\n|[^\n])+)/i
@@ -234,7 +245,12 @@ export class Source {
 						case TokenType.Value:
 						case TokenType.InstantClass:
 						case TokenType.InstantId:
+						case TokenType.InstantAttribute:
 							this.currentElement.attributes[this.attributeName] = token.contents
+							this.state = State.Props
+							break
+						case TokenType.CodeStart:
+							this.currentElement.attributes[this.attributeName] = this.consumeCode()
 							this.state = State.Props
 							break
 					}
@@ -311,6 +327,9 @@ export class Source {
 				this.currentElement.id = token.contents.substr(1)
 				this.state = State.Props
 				break
+			case TokenType.InstantAttribute:
+				this.currentElement.attributes[token.contents.substr(1)] = 'true'
+				break
 			case TokenType.AttributeName:
 				let name = token.contents.match(/^([a-z0-9-:@]+)/i)
 				if (!name) {
@@ -323,6 +342,9 @@ export class Source {
 			case TokenType.StringLimiter:
 				this.currentElement.content = this.consumeString()
 				this.state = State.Newline
+				break
+			case TokenType.CodeStart:
+				this.currentElement.attributes['{' + this.consumeCode() + '}'] = 'true'
 				break
 			case TokenType.NewLine:
 				this.indent = 0
@@ -342,6 +364,20 @@ export class Source {
 		let end = this.consumeSpecific(TokenType.StringLimiter)
 		if (!end) {
 			throw new ParseError(this, 'Expected end of string', this.position)
+		}
+
+		return contents.contents
+	}
+
+	private consumeCode () {
+		let contents = this.consumeSpecific(TokenType.CodeContents)
+		if (!contents) {
+			throw new ParseError(this, 'Expected code contents', this.position)
+		}
+
+		let end = this.consumeSpecific(TokenType.CodeEnd)
+		if (!end) {
+			throw new ParseError(this, 'Expected end of code', this.position)
 		}
 
 		return contents.contents
